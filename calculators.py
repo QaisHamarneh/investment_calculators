@@ -352,7 +352,7 @@ def calculate_loan_callback():
                 {"Principle": principles,
                  "Paid interest": interests,
                  "Total paid": totals},
-                True)
+                12)
 
 
 calculate_button(loan_frame, 6, calculate_loan_callback)

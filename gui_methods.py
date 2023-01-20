@@ -56,7 +56,7 @@ def get_entry_value(entry: customtkinter.CTkEntry, default, num):
             return IOError
 
 
-def draw_figure(frame, period, money_lists: dict, years: bool = False):
+def draw_figure(frame, period, money_lists: dict, frequency: int = 1):
     fig = Figure(figsize=(6, 4), dpi=100)
     t = np.arange(period + 1)
     plot = fig.add_subplot(111)
@@ -67,13 +67,10 @@ def draw_figure(frame, period, money_lists: dict, years: bool = False):
     plot.set_xlabel("Years")
     plot.set_ylabel("Money (in 1000)" if max_money > 100_000 else "Money")
     plot.legend(loc=2)
-    if not years:
-        plot.set_xticks([x for x in t if x % 2 == 0] if len(t) > 10 else t)
-    else:
-        plot.set_xticks([x for x in t if x % 24 == 0] if len(t) > 120 else
-                        [x for x in t if x % 12 == 0])
-        plot.set_xticklabels([x // 12 for x in t if x % 24 == 0] if len(t) > 120 else
-                             [x // 12 for x in t if x % 12 == 0])
+    plot.set_xticks([x for x in t if x % (2 * frequency) == 0] if len(t) > 10 * frequency else
+                    [x for x in t if x % frequency == 0])
+    plot.set_xticklabels([x // frequency for x in t if x % (2 * frequency) == 0] if len(t) > 10 * frequency else
+                         [x // frequency for x in t if x % frequency == 0])
 
     cursor(fig, hover=True)
     for widget in frame.winfo_children():
