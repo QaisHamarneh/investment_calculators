@@ -1,6 +1,3 @@
-import numpy as np
-
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from gui_methods import *
@@ -67,6 +64,14 @@ def calculate_investment_callback():
     current_salary = get_entry_value(if_salary_inflation_rate_entry, 5000, float)
     percentage_deposit = get_entry_value(if_percentage_deposit_entry, 15, float)
 
+    if initial_amount == IOError or \
+            interest_rate == IOError or \
+            period == IOError or \
+            inflation_rate == IOError or \
+            current_salary == IOError or \
+            percentage_deposit == IOError:
+        return
+
     deposits, interests, totals = interest_calculator(initial_amount,
                                                       interest_rate,
                                                       period,
@@ -118,6 +123,11 @@ def calculate_inflation_callback():
     period = get_entry_value(ff_period_entry, 20, int)
     inflation_rate = get_entry_value(ff_inflation_rate_entry, 2, float)
 
+    if current_amount == IOError or \
+            period == IOError or \
+            inflation_rate == IOError:
+        return
+
     inflated_amounts = inflation_calculator(current_amount,
                                             inflation_rate,
                                             period)
@@ -153,7 +163,7 @@ retirement_graph_frame.grid(row=9, column=1, rowspan=2, columnspan=2)
 
 ###########################################################################
 rf_expected_salary_entry = define_row(retirement_frame,
-                                      "Desired monthly salary at retirement (in today's values)", 5000, 1)
+                                      "Desired monthly salary\nat retirement (in today's values)", 5000, 1)
 rf_current_salary_entry = define_row(retirement_frame, "Current net salary", 3000, 2)
 rf_period_entry = define_row(retirement_frame, "Years until retirement", 20, 3)
 rf_starting_amount_entry = define_row(retirement_frame, "Current saving", 10000, 4)
@@ -176,6 +186,15 @@ def calculate_retirement_callback():
     inflation_rate = get_entry_value(rf_inflation_rate_entry, 2, float)
     salary_inflation_rate = get_entry_value(rf_salary_inflation_rate_entry, 5, float)
     interest_rate = get_entry_value(rf_interest_rate_entry, 8, float)
+
+    if expected_salary == IOError or \
+            current_salary == IOError or \
+            period == IOError or \
+            starting_amount == IOError or \
+            inflation_rate == IOError or \
+            salary_inflation_rate == IOError or \
+            interest_rate == IOError:
+        return
 
     inflated_salary, accumulated_investments, retirement_investment, percentage = \
         retirement_calculator(expected_salary,
@@ -228,6 +247,11 @@ def calculate_percentage_callback():
     end_amount = get_entry_value(pf_end_amount_entry, 1000, float)
     period = get_entry_value(pf_period_entry, 20, int)
 
+    if starting_amount == IOError or \
+            end_amount == IOError or \
+            period == IOError:
+        return
+
     inflation_rate, inflated_amounts = percentage_calculator(end_amount,
                                                              starting_amount,
                                                              period)
@@ -260,7 +284,7 @@ loan_graph_frame.grid(row=9, column=1, rowspan=2, columnspan=2)
 
 ###########################################################################
 lf_loan_amount_entry = define_row(loan_frame, "Loan amount", 100_000, 1)
-lf_interest_rate_entry = define_row(loan_frame, "Interest rate", 5, 2)
+lf_interest_rate_entry = define_row(loan_frame, "Interest rate (%)", 5, 2)
 lf_period_entry = define_row(loan_frame, "Period (in years)", 30, 3)
 lf_monthly_payment_entry = define_row(loan_frame, "Monthly payment", "", 5)
 
@@ -276,7 +300,7 @@ lf_min_monthly_payment_results.grid(row=2, column=2)
 lf_total_amount_res_label = define_results_frame(loan_frame, 6, ["Original total"])[0]
 
 lf_reduced_total_res_label, lf_reduced_period_res_label = define_results_frame(loan_frame, 7,
-                                                                               ["Reduced total", "Reduced Period"])
+                                                                               ["Actual total", "Actual Period"])
 
 
 def calculate_loan_monthly_payment_callback():
@@ -284,13 +308,18 @@ def calculate_loan_monthly_payment_callback():
     interest_rate = get_entry_value(lf_interest_rate_entry, 5, float)
     period = get_entry_value(lf_period_entry, 30, int)
 
+    if loan_amount == IOError or \
+            interest_rate == IOError or \
+            period == IOError:
+        return
+
     total_amount, min_monthly_payment, _, _, _ = loan_calculator(loan_amount,
                                                                  interest_rate,
                                                                  period)
-
-    lf_min_monthly_payment_results.configure(text=f"  {round(min_monthly_payment):,}  ")
+    rounded_payment = round(min_monthly_payment, 2)
+    lf_min_monthly_payment_results.configure(text=f"  {rounded_payment}  ")
     lf_monthly_payment_entry.delete(0, 'end')
-    lf_monthly_payment_entry.insert(-1, f"{round(min_monthly_payment):,}")
+    lf_monthly_payment_entry.insert(0, f"{rounded_payment}")
     write_results(lf_total_amount_res_label, total_amount)
 
 
@@ -303,21 +332,27 @@ lf_get_monthly_payment_button.grid(row=4, column=1)
 def calculate_loan_callback():
     loan_amount = get_entry_value(lf_loan_amount_entry, 100_000, float)
     interest_rate = get_entry_value(lf_interest_rate_entry, 5, float)
-    period = get_entry_value(lf_period_entry, 30, int)
-    monthly_payment = get_entry_value(lf_monthly_payment_entry, 30, float)
-    print(monthly_payment)
+    monthly_payment = get_entry_value(lf_monthly_payment_entry,
+                                      float(lf_min_monthly_payment_results.cget("text")),
+                                      float)
+
+    if loan_amount == IOError or \
+            interest_rate == IOError or \
+            monthly_payment == IOError:
+        return
+
     red_amount, years, months, principles, interests, totals = higher_monthly_payment_calculator(loan_amount,
                                                                                                  interest_rate,
-                                                                                                 period,
                                                                                                  monthly_payment)
 
     write_results(lf_reduced_total_res_label, red_amount)
     lf_reduced_period_res_label.configure(text=f"=  {years} years + {months} months  ")
     draw_figure(loan_graph_frame,
-                years + 1,
+                len(principles) - 1,
                 {"Principle": principles,
                  "Paid interest": interests,
-                 "Total paid": totals})
+                 "Total paid": totals},
+                True)
 
 
 calculate_button(loan_frame, 6, calculate_loan_callback)
