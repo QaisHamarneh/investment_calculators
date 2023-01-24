@@ -44,10 +44,10 @@ def define_results_frame(frame, row, labels):
     return entries
 
 
-def get_entry_value(entry: customtkinter.CTkEntry, default, num):
+def get_entry_value(entry: customtkinter.CTkEntry, num):
     entry_input = entry.get()
-    if entry_input == '':
-        return default
+    if entry_input == '' and entry.cget('placeholder_text') != '':
+        return num(entry.cget('placeholder_text'))
     else:
         try:
             return num(entry_input)
@@ -66,11 +66,10 @@ def draw_figure(frame, period, money_lists: dict, frequency: int = 1):
                   label=label)
     plot.set_xlabel("Years")
     plot.set_ylabel("Money (in 1000)" if max_money > 100_000 else "Money")
+    time_intervals = len(t) // 10
     plot.legend(loc=2)
-    plot.set_xticks([x for x in t if x % (2 * frequency) == 0] if len(t) > 10 * frequency else
-                    [x for x in t if x % frequency == 0])
-    plot.set_xticklabels([x // frequency for x in t if x % (2 * frequency) == 0] if len(t) > 10 * frequency else
-                         [x // frequency for x in t if x % frequency == 0])
+    plot.set_xticks([x for x in t if x % (time_intervals * frequency) == 0])
+    plot.set_xticklabels([x // frequency for x in t if x % (time_intervals * frequency) == 0])
 
     cursor(fig, hover=True)
     for widget in frame.winfo_children():
